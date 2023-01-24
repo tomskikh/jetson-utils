@@ -123,9 +123,4 @@ install(EXPORT jetson-utilsConfig DESTINATION share/jetson-utils/cmake)
 
 
 # build tests/sample executables
-add_subdirectory(camera/camera-viewer)
-add_subdirectory(video/video-viewer)
-add_subdirectory(display/gl-display-test)
-add_subdirectory(network/webrtc-server)
-add_subdirectory(network/rtsp-server)
 add_subdirectory(python)

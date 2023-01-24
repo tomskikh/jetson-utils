@@ -68,12 +68,8 @@ set_target_properties(jetson-utils-python-${PYTHON_VERSION_MAJOR}${PYTHON_VERSIO
 					OUTPUT_NAME "jetson_utils_python"
 					LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
 
-# on x86, install under /opt/conda/lib/pythonX.X/site-packages
-# otherwise, install under /usr/lib/pythonX.X/dist-packages
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-	set(PYTHON_BINDING_INSTALL_DIR /opt/conda/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages)
-else()
-	set(PYTHON_BINDING_INSTALL_DIR /usr/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/dist-packages)
+if(NOT DEFINED PYTHON_BINDING_INSTALL_DIR)
+	set(PYTHON_BINDING_INSTALL_DIR lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/dist-packages)
 endif()
 
 install(TARGETS jetson-utils-python-${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} DESTINATION ${PYTHON_BINDING_INSTALL_DIR})

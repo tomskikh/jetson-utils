@@ -1104,6 +1104,52 @@ PyObject* PyCUDA_AllocMapped( PyObject* self, PyObject* args, PyObject* kwds )
 				: PyCUDA_RegisterMemory(ptr, size, true);
 }
 
+PyObject* PyCUDA_WrapAllocated( PyObject* self, PyObject* args, PyObject* kwds )
+{
+    uint64_t uPtr = 0;
+    int size = 0;
+    int width = 0;
+    int height = 0;
+    const char* formatStr = NULL;
+    long long timestamp = 0;
+    bool freeOnDelete = true;
+
+    static char* kwlist[] = {"ptr", "size", "width", "height", "format", "timestamp", "freeOnDelete", NULL};
+
+    if( !PyArg_ParseTupleAndKeywords(args, kwds, "K|iiisLp", kwlist, &uPtr, &size, &width, &height, &formatStr, &timestamp, &freeOnDelete))
+        return NULL;
+
+    auto * ptr = (void *)uPtr;
+
+    imageFormat format = imageFormatFromStr(formatStr);
+
+    if( size <= 0 && (width <= 0 || height <= 0) )
+    {
+        PyErr_SetString(PyExc_Exception, LOG_PY_UTILS "cudaAllocMapped() requested size/dimensions are negative or zero");
+        return NULL;
+    }
+
+    if( timestamp < 0 )
+    {
+        PyErr_SetString(PyExc_Exception, LOG_PY_UTILS "cudaAllocMapped() timestamp cannot be negative");
+        return NULL;
+    }
+
+    const bool isImage = (width > 0) && (height > 0);
+
+    if( isImage && format == IMAGE_UNKNOWN )
+    {
+        PyErr_SetString(PyExc_Exception, LOG_PY_UTILS "cudaAllocMapped() invalid format string");
+        return NULL;
+    }
+
+    if( isImage )
+        size = imageFormatSize(format, width, height);
+
+    return isImage ? PyCUDA_RegisterImage(ptr, width, height, format, timestamp, true, freeOnDelete)
+                   : PyCUDA_RegisterMemory(ptr, size, true, freeOnDelete);
+}
+
 
 // PyCUDA_Memcpy
 PyObject* PyCUDA_Memcpy( PyObject* self, PyObject* args, PyObject* kwds )
@@ -2013,6 +2059,7 @@ static PyMethodDef pyCUDA_Functions[] =
 {
 	{ "cudaMalloc", (PyCFunction)PyCUDA_Malloc, METH_VARARGS|METH_KEYWORDS, "Allocated CUDA memory on the GPU with cudaMalloc()" },
 	{ "cudaAllocMapped", (PyCFunction)PyCUDA_AllocMapped, METH_VARARGS|METH_KEYWORDS, "Allocate CUDA ZeroCopy mapped memory" },
+	{ "cudaWrapAllocated", (PyCFunction)PyCUDA_WrapAllocated, METH_VARARGS|METH_KEYWORDS, "Wrap allocated CUDA memory to cudaImage object" },
 	{ "cudaMemcpy", (PyCFunction)PyCUDA_Memcpy, METH_VARARGS|METH_KEYWORDS, "Copy src image to dst image (or if dst is not provided, return a new image with the contents of src)" },
 	{ "cudaDeviceSynchronize", (PyCFunction)PyCUDA_DeviceSynchronize, METH_NOARGS, "Wait for the GPU to complete all work" },
 	{ "cudaConvertColor", (PyCFunction)PyCUDA_ConvertColor, METH_VARARGS|METH_KEYWORDS, "Perform colorspace conversion on the GPU" },
